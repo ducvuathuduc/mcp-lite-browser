@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<meta charset="utf-8"><title>mcp-lite-browser demo</title>
+<input id="url" value="http://127.0.0.1:8765/mcp" size="40"> <button id="go">Connect & list tools</button>
+<pre id="out"></pre>
+<script type="module">
+  import { McpHttpClient } from "../src/index.js";
+  document.getElementById("go").onclick = async () => {
+    const out = document.getElementById("out");
+    const c = new McpHttpClient(document.getElementById("url").value, { onTraffic: (d, m) => out.textContent += `${d} ${m.method || "result"}\n` });
+    const init = await c.connect();
+    out.textContent += `connected to ${init.serverInfo.name} (MCP ${c.negotiatedVersion})\n`;
+    const { tools } = await c.listTools();
+    out.textContent += tools.map((t) => "• " + t.name).join("\n");
+  };
+</script>

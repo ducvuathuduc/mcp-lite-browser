@@ -1,0 +1,14 @@
+{
+  "name": "mcp-lite-browser",
+  "version": "1.0.0",
+  "description": "Zero-dependency MCP client for the browser (Streamable HTTP, spec 2025-11-25) plus a minimal MCP Apps host bridge.",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": "./src/index.js",
+  "files": ["src"],
+  "scripts": { "test": "node --test test/client.test.js test/bridge.test.js" },
+  "keywords": ["mcp", "model-context-protocol", "streamable-http", "mcp-apps", "browser", "alexa"],
+  "author": "Huỳnh Diệu Thành",
+  "license": "MIT",
+  "engines": { "node": ">=18" }
+}
