@@ -33,7 +33,7 @@ export class McpHttpClient {
   constructor(url, { protocolVersion = "2025-11-25", clientInfo, fetchImpl, onTraffic } = {}) {
     this.url = url;
     this.protocolVersion = protocolVersion;
-    this.clientInfo = clientInfo || { name: "mcp-lite-browser", version: "1.0.0" };
+    this.clientInfo = clientInfo || { name: "mcp-lite-browser", version: "0.1.0" };
     this.fetch = fetchImpl || ((...a) => globalThis.fetch(...a));
     this.onTraffic = onTraffic || (() => {});
     this.sessionId = null;
@@ -113,7 +113,7 @@ export class AppBridge {
   constructor(iframe, { client, hostInfo, onSize, onToolResult, allowTool } = {}) {
     this.iframe = iframe;
     this.client = client;
-    this.hostInfo = hostInfo || { name: "mcp-lite-host", version: "1.0.0" };
+    this.hostInfo = hostInfo || { name: "mcp-lite-host", version: "0.1.0" };
     this.onSize = onSize || (() => {});
     this.onToolResult = onToolResult || (() => {});
     this.allowTool = allowTool || (() => true);
