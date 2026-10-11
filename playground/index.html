@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MCP Playground · mcp-lite-browser</title>
+<meta name="description" content="Zero-install MCP inspector in your browser: connect to any Streamable HTTP MCP server, call tools, render MCP Apps, answer elicitation and sampling, and watch every JSON-RPC message. Nothing leaves your browser.">
+<meta property="og:title" content="MCP Playground · mcp-lite-browser">
+<meta property="og:description" content="Connect to any MCP server from a static page. Tools, MCP Apps, elicitation, sampling, OAuth 2.1, and a live traffic inspector.">
+<meta property="og:image" content="https://ducvuathuduc.github.io/mcp-lite-browser/social-preview.png">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="bar">
+  <a class="brand" href="https://github.com/ducvuathuduc/mcp-lite-browser"><img src="logo.svg" alt="" width="22" height="22"><b>MCP Playground</b></a>
+  <span class="sub">runs on <a href="https://github.com/ducvuathuduc/mcp-lite-browser">mcp-lite-browser</a> · <span id="libsize">8.4 kB</span> · nothing leaves your browser except requests to the server you choose</span>
+  <a class="gh" href="https://github.com/ducvuathuduc/mcp-lite-browser" aria-label="GitHub repository">GitHub ↗</a>
+</header>
+
+<section class="connect">
+  <form id="connect-form">
+    <input id="url" type="url" placeholder="https://your-server.example.com/mcp" aria-label="MCP server URL" autocomplete="url" spellcheck="false">
+    <select id="auth" aria-label="Authorization">
+      <option value="none">No auth</option>
+      <option value="bearer">Bearer token</option>
+      <option value="oauth">OAuth 2.1 (PKCE)</option>
+    </select>
+    <input id="token" type="password" placeholder="token" aria-label="Bearer token" hidden>
+    <button id="connect" type="submit" class="primary">Connect</button>
+    <button id="demo" type="button">Try the in-browser demo server</button>
+    <button id="disconnect" type="button" hidden>Disconnect</button>
+  </form>
+  <div id="status" class="status" role="status">Not connected. The demo server runs inside this page, so it works offline.</div>
+</section>
+
+<main class="grid">
+  <nav class="pane list" aria-label="Server features">
+    <div class="tabs" role="tablist">
+      <button role="tab" data-tab="tools" class="on">Tools <span id="n-tools"></span></button>
+      <button role="tab" data-tab="resources">Resources <span id="n-resources"></span></button>
+      <button role="tab" data-tab="prompts">Prompts <span id="n-prompts"></span></button>
+    </div>
+    <ul id="items" class="items"><li class="empty">Connect to a server to see its tools.</li></ul>
+  </nav>
+
+  <section class="pane detail" aria-label="Details">
+    <div id="detail" class="empty-detail">
+      <h2>Inspect any MCP server from a static page</h2>
+      <ol>
+        <li>Click <b>Try the in-browser demo server</b>, or paste the URL of a Streamable HTTP server that allows CORS.</li>
+        <li>Pick a tool. Its form is generated from the JSON Schema.</li>
+        <li>Tools with an MCP App render in a sandboxed iframe right here.</li>
+      </ol>
+      <p class="hint">Local servers work too (<code>http://localhost:3000/mcp</code>): the page talks to them straight from your browser. Your server must send CORS headers and expose <code>Mcp-Session-Id</code>.</p>
+    </div>
+  </section>
+
+  <aside class="pane traffic" aria-label="Traffic inspector">
+    <div class="traffic-head">
+      <b>Traffic</b><span id="n-msgs" class="muted">0 messages</span>
+      <span class="spacer"></span>
+      <button id="copy-log" type="button" class="small">Copy JSON</button>
+      <button id="clear-log" type="button" class="small">Clear</button>
+    </div>
+    <ol id="log" class="log"></ol>
+  </aside>
+</main>
+
+<dialog id="elicit-dialog">
+  <form method="dialog" id="elicit-form">
+    <h3>The server is asking you</h3>
+    <p id="elicit-message"></p>
+    <div id="elicit-fields"></div>
+    <menu>
+      <button value="cancel" type="submit">Cancel</button>
+      <button value="decline" type="submit">Decline</button>
+      <button value="accept" type="submit" class="primary">Accept</button>
+    </menu>
+  </form>
+</dialog>
+
+<dialog id="sampling-dialog">
+  <form method="dialog" id="sampling-form">
+    <h3>sampling/createMessage</h3>
+    <p class="muted">The server wants a completion from your model. In this playground, you are the model.</p>
+    <pre id="sampling-prompt"></pre>
+    <label>Your reply<textarea id="sampling-reply" rows="3"></textarea></label>
+    <menu>
+      <button value="reject" type="submit">Reject</button>
+      <button value="send" type="submit" class="primary">Send reply</button>
+    </menu>
+  </form>
+</dialog>
+
+<footer class="foot">
+  <span>MIT · <a href="https://github.com/ducvuathuduc/mcp-lite-browser#readme">Docs</a> · <a href="https://modelcontextprotocol.io/specification/2025-11-25">MCP 2025-11-25</a> · <a href="https://github.com/modelcontextprotocol/ext-apps">MCP Apps</a></span>
+</footer>
+<script type="module" src="app.js"></script>
+</body>
+</html>

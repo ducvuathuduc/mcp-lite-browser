@@ -1,0 +1,10 @@
+{
+  "client_id": "https://ducvuathuduc.github.io/mcp-lite-browser/oauth-client.json",
+  "client_name": "MCP Playground (mcp-lite-browser)",
+  "client_uri": "https://ducvuathuduc.github.io/mcp-lite-browser/",
+  "logo_uri": "https://ducvuathuduc.github.io/mcp-lite-browser/logo.svg",
+  "redirect_uris": ["https://ducvuathuduc.github.io/mcp-lite-browser/callback.html"],
+  "grant_types": ["authorization_code", "refresh_token"],
+  "response_types": ["code"],
+  "token_endpoint_auth_method": "none"
+}

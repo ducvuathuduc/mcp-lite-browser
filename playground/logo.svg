@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-labelledby="t">
+  <title id="t">mcp-lite-browser</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0B1426"/>
+      <stop offset="1" stop-color="#2E1F5E"/>
+    </linearGradient>
+    <linearGradient id="acc" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#A78BFA"/>
+      <stop offset="1" stop-color="#22D3EE"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="58" fill="url(#bg)"/>
+  <rect x="1.5" y="1.5" width="253" height="253" rx="56.5" fill="none" stroke="#FFFFFF" stroke-opacity=".08" stroke-width="3"/>
+  <!-- browser window -->
+  <rect x="46" y="58" width="164" height="140" rx="20" fill="#FFFFFF" fill-opacity=".04" stroke="#E2E8F0" stroke-width="10"/>
+  <line x1="51" y1="92" x2="205" y2="92" stroke="#E2E8F0" stroke-width="8"/>
+  <circle cx="70" cy="75" r="5" fill="#F87171"/>
+  <circle cx="86" cy="75" r="5" fill="#FBBF24"/>
+  <circle cx="102" cy="75" r="5" fill="#34D399"/>
+  <!-- protocol graph: client, server, app -->
+  <g stroke="url(#acc)" stroke-width="7" stroke-linecap="round">
+    <line x1="101" y1="158" x2="120" y2="131"/>
+    <line x1="136" y1="131" x2="155" y2="158"/>
+  </g>
+  <g fill="#94A3B8"><circle cx="114" cy="168" r="3.5"/><circle cx="128" cy="168" r="3.5"/><circle cx="142" cy="168" r="3.5"/></g>
+  <circle cx="128" cy="120" r="14" fill="#22D3EE"/>
+  <circle cx="94" cy="168" r="12" fill="#A78BFA"/>
+  <circle cx="162" cy="168" r="10.5" fill="none" stroke="#7DD3FC" stroke-width="7"/>
+</svg>

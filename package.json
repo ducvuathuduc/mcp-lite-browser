@@ -1,14 +1,88 @@
 {
   "name": "mcp-lite-browser",
-  "version": "0.1.0",
-  "description": "Zero-dependency MCP client for the browser (Streamable HTTP, spec 2025-11-25) plus a minimal MCP Apps host bridge.",
+  "version": "0.2.0",
+  "description": "The 9 kB MCP client for the browser: Streamable HTTP (spec 2025-11-25), OAuth 2.1, resumable SSE, elicitation, sampling, and an MCP Apps host. Zero dependencies, TypeScript types, no build step.",
   "type": "module",
-  "main": "src/index.js",
-  "exports": "./src/index.js",
-  "files": ["src"],
-  "scripts": { "test": "node --test test/client.test.js test/bridge.test.js" },
-  "keywords": ["mcp", "model-context-protocol", "streamable-http", "mcp-apps", "browser", "alexa"],
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./react": {
+      "types": "./dist/react.d.ts",
+      "default": "./dist/react.js"
+    },
+    "./bundle": "./dist/mcp-lite-browser.min.js",
+    "./package.json": "./package.json"
+  },
+  "unpkg": "./dist/mcp-lite-browser.min.js",
+  "jsdelivr": "./dist/mcp-lite-browser.min.js",
+  "files": [
+    "dist",
+    "src",
+    "!dist/size.json"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc -p . --noEmit",
+    "test": "node --test test/*.test.mjs",
+    "test:unit": "node --test test/client.test.mjs test/auth.test.mjs test/bridge.test.mjs test/react.test.mjs",
+    "size": "node scripts/check-size.mjs",
+    "prepublishOnly": "npm run build && npm test && npm run size",
+    "playground": "node scripts/demo-server.mjs"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "mcp-client",
+    "mcp-apps",
+    "streamable-http",
+    "browser",
+    "oauth",
+    "pkce",
+    "sse",
+    "elicitation",
+    "sampling",
+    "react",
+    "svelte",
+    "typescript",
+    "ai",
+    "agents"
+  ],
   "author": "Huỳnh Diệu Thành",
   "license": "MIT",
-  "engines": { "node": ">=18" }
+  "homepage": "https://ducvuathuduc.github.io/mcp-lite-browser/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ducvuathuduc/mcp-lite-browser.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ducvuathuduc/mcp-lite-browser/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "@types/node": "^26.6.5",
+    "@types/react": "^19.3.0",
+    "esbuild": "^0.28.2",
+    "puppeteer-core": "^25.13.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "typescript": "^5.9.3",
+    "zod": "^4.6.5"
+  }
 }

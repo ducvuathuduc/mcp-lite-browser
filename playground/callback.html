@@ -1,0 +1,7 @@
+<!doctype html>
+<meta charset="utf-8"><title>Signing in…</title>
+<p style="font:14px system-ui;padding:24px">Finishing sign-in… you can close this window.</p>
+<script type="module">
+  // OAuth redirect target for the playground's popup flow (see completeOAuthPopup in mcp-lite-browser).
+  if (window.opener) { window.opener.postMessage({ type: "mcp-oauth-callback", url: location.href }, location.origin); setTimeout(() => window.close(), 300); }
+</script>

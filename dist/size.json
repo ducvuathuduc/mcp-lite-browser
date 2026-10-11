@@ -1,0 +1,14 @@
+{
+  "mcp-lite-browser.min.js": {
+    "min": 24208,
+    "gzip": 8627
+  },
+  "client.min.js": {
+    "min": 10524,
+    "gzip": 3988
+  },
+  "bridge.min.js": {
+    "min": 6252,
+    "gzip": 2680
+  }
+}
