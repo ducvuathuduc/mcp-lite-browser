@@ -24,12 +24,12 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: npm
-      # Node 18 has no global Web Crypto (crypto.subtle / getRandomValues) without this flag.
-      - if: matrix.node == 18
-        run: echo "NODE_OPTIONS=--experimental-global-webcrypto" >> "$GITHUB_ENV"
       - run: npm ci
       - run: npm run build
       - run: npm run typecheck
       - run: npm test
+        env:
+          # Node 18 has no global Web Crypto (crypto.subtle / getRandomValues) without this flag.
+          NODE_OPTIONS: ${{ matrix.node == 18 && '--experimental-global-webcrypto' || '' }}
       - name: Size budget (≤ 10 kB min+gzip)
         run: npm run size
