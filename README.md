@@ -241,7 +241,8 @@ npm run build && npm run typecheck && npm test && npm run size
 
 54 tests with `node --test`: unit tests for the client, OAuth, the MCP Apps bridge, the store and the React hook,
 plus 17 end-to-end conformance tests against a real server built with the official MCP TypeScript SDK over HTTP.
-CI runs them on Node 18, 20 and 22.
+CI runs them on Node 18, 20 and 22. In Node 18 the OAuth code needs the global Web Crypto API, so run it with
+`NODE_OPTIONS=--experimental-global-webcrypto` (browsers and Node ≥ 20 need nothing).
 
 ## 🌟 Used by
 
