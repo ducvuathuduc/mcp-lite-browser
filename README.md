@@ -4,25 +4,23 @@
 
 # mcp-lite-browser
 
-**A zero-dependency MCP client for the browser, plus a minimal MCP Apps host bridge.**
-
-One ~190-line ES module. Drop it into a `<script type="module">`, no bundler, no build step,<br>
-and your web page speaks the Model Context Protocol over **Streamable HTTP** (spec `2025-11-25`).
+**The 8 kB MCP client for the browser: Streamable HTTP, OAuth 2.1, resumable SSE, elicitation, sampling and an MCP Apps host, with zero dependencies.**
 
 [![CI](https://github.com/ducvuathuduc/mcp-lite-browser/actions/workflows/ci.yml/badge.svg)](https://github.com/ducvuathuduc/mcp-lite-browser/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-8%20passed-2ea44f)](#-testing)
-[![Node](https://img.shields.io/badge/node-%E2%89%A518-5FA04E?logo=node.js&logoColor=white)](package.json)
+[![Size](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fducvuathuduc%2Fmcp-lite-browser%2Fmain%2Fbadges%2Fsize.json)](dist/size.json)
+[![Tests](https://img.shields.io/badge/tests-54%20passed-2ea44f)](#-testing)
 [![Dependencies](https://img.shields.io/badge/dependencies-0-0ea5e9)](package.json)
+[![TypeScript](https://img.shields.io/badge/types-included-3178C6?logo=typescript&logoColor=white)](src)
 [![MCP](https://img.shields.io/badge/MCP-2025--11--25-6E56CF)](https://modelcontextprotocol.io/specification/2025-11-25)
 [![Release](https://img.shields.io/github/v/release/ducvuathuduc/mcp-lite-browser?color=8b5cf6)](https://github.com/ducvuathuduc/mcp-lite-browser/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-22c55e)](LICENSE)
 
+**[▶ Try the playground](https://ducvuathuduc.github.io/mcp-lite-browser/)** ·
 [Quickstart](#-quickstart) ·
-[API](#-api-reference) ·
-[MCP Apps](#-hosting-mcp-apps) ·
-[How it works](#-how-it-works) ·
-[Testing](#-testing) ·
-[Roadmap](#%EF%B8%8F-roadmap)
+[MCP Apps](#%EF%B8%8F-hosting-mcp-apps) ·
+[OAuth](#-oauth-21) ·
+[CORS](#-cors-and-mcp-session-id) ·
+[API](#-api-at-a-glance)
 
 <img src="assets/inspector.gif" width="420" alt="Live MCP traffic inspector built with the onTraffic hook: initialize, tools/list, resources/read and tools/call messages appear as a session runs">
 
@@ -33,308 +31,224 @@ and your web page speaks the Model Context Protocol over **Streamable HTTP** (sp
 
 ---
 
-## 📖 Table of contents
+## 📏 Why so small matters
 
-- [Why](#-why)
-- [Features](#-features)
-- [Quickstart](#-quickstart)
-- [Usage examples](#-usage-examples)
-- [API reference](#-api-reference)
-- [Hosting MCP Apps](#-hosting-mcp-apps)
-- [How it works](#-how-it-works)
-- [Compatibility & limitations](#-compatibility--limitations)
-- [Testing](#-testing)
-- [Roadmap](#%EF%B8%8F-roadmap)
-- [Used by](#-used-by)
-- [Contributing](#-contributing)
-- [License](#-license)
-- [Acknowledgements](#-acknowledgements)
+The official MCP TypeScript SDK is excellent, but it is built for Node and bundlers. If all you need is a web page
+that talks to an MCP server, you pay for a lot you never use.
 
-## 💡 Why
+| | Official SDK client (`@modelcontextprotocol/sdk`) | **mcp-lite-browser** |
+|---|---|---|
+| Browser bundle, min + gzip | 90,543 B (measured: `Client` + `StreamableHTTPClientTransport`, esbuild, minified) | **8,627 B** (`dist/mcp-lite-browser.min.js`) |
+| Runtime dependencies | 17 declared (incl. zod, ajv, express, hono) | **0** |
+| `<script type="module">` from a CDN, no bundler | no | **yes** |
+| OAuth 2.1 + PKCE in the browser | yes | **yes** (popup flow included) |
+| MCP Apps host (render `ui://` views) | no (separate package) | **yes** |
+| React hook | no | **yes** (`mcp-lite-browser/react`) |
 
-The official MCP SDKs are excellent, but they target Node and bundlers. Sometimes you just want a **plain web page**
-to talk to an MCP server: a demo, a simulator, a debugging console, a kiosk, a hackathon prototype. You want to
-`import` one file, call `connect()`, list tools, call them, and render the server's **MCP App** in an iframe.
-
-`mcp-lite-browser` is that one file. It was written for the Alexa+ track of *Build, Ship, Shape: Amazon Developer
-Hackathon 2026*, where self-hosted MCP servers are demoed through a web page that has to be a real MCP client, and is
-published separately so anyone can reuse it.
+About **10× smaller**, and a CI size check fails any change that pushes the full bundle past 10 kB.
+Smaller entry points: `client.min.js` 3,988 B and `bridge.min.js` 2,680 B (min + gzip).
 
 ## ✨ Features
 
-| | |
-|---|---|
-| 🪶 **Zero dependencies** | One ES module (189 lines), uses only `fetch`, `postMessage` and standard DOM APIs. |
-| 🤝 **Spec-correct handshake** | `initialize` with protocol-version negotiation, then `notifications/initialized`. |
-| 🧾 **Streamable HTTP headers** | Sends `MCP-Protocol-Version` and `Mcp-Session-Id` on follow-up requests; `DELETE`s the session on `close()`. |
-| 🌊 **JSON *and* SSE responses** | Handles `application/json` and `text/event-stream` bodies; ignores keep-alives and interleaved notifications. |
-| 🧰 **Typed-feeling helpers** | `listTools`, `callTool`, `listResources`, `readResource`, `listPrompts`, `getPrompt`, plus raw `request` / `notify`. |
-| 🔭 **Traffic hook** | `onTraffic(direction, message)` sees every JSON-RPC message: build an inspector in a few lines. |
-| 🖼️ **MCP Apps host bridge** | `AppBridge` renders a `ui://` view in an `allow-scripts`-only sandboxed iframe and speaks the MCP Apps postMessage dialect. |
-| 🔒 **Safe by default** | Tool calls from the view pass through an `allowTool` allow-list; `ui/open-link` opens only `http(s)` URLs; messages from other windows are ignored. |
-| ❗ **Real errors** | JSON-RPC and HTTP failures throw `McpError` with `code` and `data`. |
+- **Streamable HTTP, spec `2025-11-25`**: protocol-version negotiation, `MCP-Protocol-Version` and `Mcp-Session-Id`
+  headers, JSON and SSE responses, `DELETE` on `close()`, transparent re-initialize when a session expires (404).
+- **Resumable SSE**: the standalone `GET` stream (`listen`), reconnection with `Last-Event-ID`, the server's `retry:`
+  field and back-off.
+- **Server-to-client requests**: elicitation (form and URL mode), sampling, roots, `ping`, plus
+  `setRequestHandler` for anything else.
+- **Requests done right**: timeouts, `AbortSignal` cancellation (`notifications/cancelled`), progress callbacks,
+  pagination helpers (`listAllTools`, `listAllResources`, `listAllPrompts`).
+- **Full client surface**: tools, resources, resource templates, subscriptions, prompts, completion, logging level.
+- **OAuth 2.1**: protected-resource and authorization-server discovery (RFC 9728 / 8414), PKCE S256, dynamic
+  registration or Client ID Metadata Documents, RFC 8707 resource indicators, refresh tokens, step-up on
+  `insufficient_scope`. Or bring a static token with `bearer()`.
+- **MCP Apps host**: `AppBridge` renders a tool's `ui://` view in a sandboxed iframe with the CSP the spec
+  prescribes, enforces tool `visibility`, and handles `ui/message`, `ui/update-model-context`, display modes, host
+  context changes, links and teardown.
+- **Framework friendly**: a tiny observable store (`createMcpStore`) and a React hook (`useMcp`); works with Svelte,
+  Vue or plain JS through the store.
+- **TypeScript types** shipped, ESM only, `sideEffects: false`. Still usable with no build step.
+- **Inspector hook**: `onTraffic(direction, message, meta)` sees every JSON-RPC message.
 
 ## 🚀 Quickstart
 
-There is nothing to build. Pick one way to get the file:
-
-```bash
-# A. Copy the single file into your project
-curl -LO https://raw.githubusercontent.com/ducvuathuduc/mcp-lite-browser/v0.1.0/src/index.js
-
-# B. Or install from GitHub with npm (it is not published to the npm registry)
-npm install github:ducvuathuduc/mcp-lite-browser#v0.1.0
-```
-
-Then, in any page served from the **same origin** as your MCP server (or with CORS enabled on the server):
+### CDN (no install, no bundler)
 
 ```html
 <script type="module">
-  import { McpHttpClient } from "./index.js";
+  import { McpClient } from "https://cdn.jsdelivr.net/gh/ducvuathuduc/mcp-lite-browser@v0.2.0/dist/mcp-lite-browser.min.js";
 
-  const client = new McpHttpClient("/mcp");          // protocolVersion defaults to "2025-11-25"
+  const client = new McpClient("https://example.com/mcp");
   const init = await client.connect();
   console.log(`connected to ${init.serverInfo.name}, MCP ${client.negotiatedVersion}`);
 
-  const { tools } = await client.listTools();
-  console.log(tools.map((t) => t.name));
+  const tools = await client.listAllTools();
+  const result = await client.callTool(tools[0].name, {});
+  console.log(result.structuredContent ?? result.content);
 </script>
 ```
 
-A runnable page lives in [`examples/index.html`](examples/index.html): serve the repo root with any static server
-and point the input at your MCP endpoint.
+### npm
 
-## 🧪 Usage examples
+The package is not on the npm registry yet; install it from GitHub (the built `dist/` is committed):
 
-<details open>
-<summary><b>Call a tool and read structured output</b></summary>
-
-```js
-const result = await client.callTool("start_drill", { learner_id: "lan", task_type: "repeat_sentence" });
-console.log(result.structuredContent);         // machine-readable output, if the server sends it
-console.log(result.content?.[0]?.text);        // text fallback
+```bash
+npm install github:ducvuathuduc/mcp-lite-browser#v0.2.0
 ```
-</details>
 
-<details>
-<summary><b>Build a traffic inspector</b></summary>
+```ts
+import { McpClient, McpError } from "mcp-lite-browser";
 
-```js
-const log = document.querySelector("#log");
-const client = new McpHttpClient("/mcp", {
-  onTraffic: (direction, msg) => {
-    const arrow = direction === "out" ? "→" : "←";
-    log.insertAdjacentHTML("beforeend", `<li>${arrow} ${msg.method ?? "result"} ${msg.id != null ? "#" + msg.id : ""}</li>`);
-  },
+const client = new McpClient("/mcp", {
+  timeout: 30_000,
+  onElicit: async ({ message, requestedSchema }) => ({ action: "accept", content: await askUser(message, requestedSchema) }),
 });
-```
-</details>
+await client.connect();
 
-<details>
-<summary><b>Resources and prompts</b></summary>
-
-```js
-const { resources } = await client.listResources();
-const skill = await client.readResource("skill://speakloop-coach/SKILL.md");
-console.log(skill.contents[0].text);
-
-const { prompts } = await client.listPrompts();
-const p = await client.getPrompt("daily_session", { learner_id: "lan", minutes: "10" });
-```
-</details>
-
-<details>
-<summary><b>Handle errors</b></summary>
-
-```js
-import { McpError } from "./index.js";
-
+const ctrl = new AbortController();
 try {
-  await client.request("no/such-method");
+  const res = await client.callTool("long_job", { n: 10 }, { signal: ctrl.signal });
+  if (res.isError) console.warn("tool failed", res.content);
 } catch (e) {
-  if (e instanceof McpError) console.warn(e.code, e.message, e.data);   // e.g. -32601, or the HTTP status
+  if (e instanceof McpError) console.error(e.code, e.message);
 }
 ```
 
-Note that a tool that *runs* but fails is not a protocol error: the server returns a normal result with
-`isError: true`, so check `result.isError` after `callTool`.
-</details>
+> v0.1's `McpHttpClient` name still works: it is an alias of `McpClient`.
 
-<details>
-<summary><b>Custom <code>fetch</code> (auth headers, tests, Node)</b></summary>
+### React
 
-```js
-const client = new McpHttpClient("https://example.com/mcp", {
-  fetchImpl: (url, init) => fetch(url, { ...init, headers: { ...init.headers, authorization: `Bearer ${token}` } }),
-  clientInfo: { name: "my-app", version: "1.2.3" },
-});
+```tsx
+import { useMcp } from "mcp-lite-browser/react";
+
+export function Tools() {
+  const { status, tools, error, callTool } = useMcp("https://example.com/mcp");
+  if (status === "connecting") return <p>Connecting…</p>;
+  if (status === "failed") return <p>Error: {error?.message}</p>;
+  return (
+    <ul>
+      {tools.map((t) => (
+        <li key={t.name}>
+          <button onClick={() => callTool(t.name, {})}>{t.name}</button>
+        </li>
+      ))}
+    </ul>
+  );
+}
 ```
 
-The same option is how the test suite runs in Node without a network: it passes a fake `fetch`.
-</details>
-
-## 📚 API reference
-
-### `new McpHttpClient(url, options?)`
-
-| Option | Default | Description |
-|---|---|---|
-| `protocolVersion` | `"2025-11-25"` | Version offered in `initialize`; the server's answer is stored in `negotiatedVersion` |
-| `clientInfo` | `{ name: "mcp-lite-browser", version: "0.1.0" }` | Sent in `initialize` |
-| `fetchImpl` | `globalThis.fetch` | Custom fetch (auth, proxies, tests) |
-| `onTraffic` | no-op | `(direction: "out" \| "in", message) => void` for every JSON-RPC message |
-
-| Method | Returns | Notes |
-|---|---|---|
-| `connect()` | `initialize` result | Sends `initialize` (advertising the MCP Apps UI extension), then `notifications/initialized` |
-| `listTools()` · `callTool(name, args?)` | result | `tools/list`, `tools/call` |
-| `listResources()` · `readResource(uri)` | result | `resources/list`, `resources/read` |
-| `listPrompts()` · `getPrompt(name, args?)` | result | `prompts/list`, `prompts/get` |
-| `request(method, params?)` | result | Any JSON-RPC request; ids increase monotonically |
-| `notify(method, params?)` | `null` | Any JSON-RPC notification |
-| `close()` | — | `DELETE`s the session if the server issued an `Mcp-Session-Id` |
-
-| Property | Description |
-|---|---|
-| `negotiatedVersion` | Protocol version the server accepted |
-| `serverInfo` · `serverCapabilities` · `instructions` | From the `initialize` result |
-| `sessionId` | Current `Mcp-Session-Id`, if any |
-
-### `new AppBridge(iframe, options?)`
-
-| Option | Default | Description |
-|---|---|---|
-| `client` | — | An `McpHttpClient` used to proxy the view's `tools/call` and `resources/read` |
-| `hostInfo` | `{ name: "mcp-lite-host", version: "0.1.0" }` | Returned to the view in `ui/initialize` |
-| `allowTool` | `() => true` | `(toolName) => boolean`; denied calls get JSON-RPC error `-32601` |
-| `onToolResult` | no-op | `(name, args, result)` after a proxied tool call, to keep your agent's context in sync |
-| `onSize` | no-op | `(height)` when the view reports `ui/notifications/size-changed` |
-
-| Method | Description |
-|---|---|
-| `load(html)` | Renders the view in the iframe with `sandbox="allow-scripts"` and resets the queue |
-| `sendToolInput(args)` | `ui/notifications/tool-input` (queued until the view is initialized) |
-| `sendToolResult(result)` | `ui/notifications/tool-result` (queued until the view is initialized) |
-| `destroy()` | Removes the `message` listener |
-
-### Exports
-
-`McpHttpClient`, `AppBridge`, `McpError`, `parseSse(text)`.
+`tools`, `resources` and `prompts` refresh automatically on `list_changed` notifications. Outside React, use
+`createMcpStore(url)` and its `subscribe` / `getSnapshot`.
 
 ## 🖼️ Hosting MCP Apps
 
-An MCP App is an HTML view a server exposes as a `ui://` resource (MIME `text/html;profile=mcp-app`); tools point at
-it through `_meta.ui.resourceUri`. Rendering one takes four lines:
+An MCP App is an HTML view a server exposes as a `ui://` resource (`text/html;profile=mcp-app`); tools point at it
+through `_meta.ui.resourceUri`. `AppBridge.open` reads the view, calls the tool, and feeds the view its input and
+result:
 
-```js
-import { McpHttpClient, AppBridge } from "./index.js";
+```ts
+import { McpClient, AppBridge, isModelVisible } from "mcp-lite-browser";
 
-const client = new McpHttpClient("/mcp");
+const client = new McpClient("/mcp");
 await client.connect();
-const { tools } = await client.listTools();
-const result = await client.callTool("start_drill", { learner_id: "lan" });
+const tools = await client.listAllTools();
 
-const uri = tools.find((t) => t.name === "start_drill")._meta?.ui?.resourceUri;   // e.g. "ui://speakloop/card.html"
-const html = (await client.readResource(uri)).contents[0].text;
-const bridge = new AppBridge(document.querySelector("iframe"), {
-  client,
-  allowTool: (name) => ["start_drill", "progress_report"].includes(name),
+const { bridge, result } = await AppBridge.open(document.querySelector("iframe")!, client, "show_chart", { days: 7 }, {
+  tools,                                              // enforces _meta.ui.visibility (app-only tools)
+  hostContext: { theme: "dark", displayMode: "inline" },
+  onSize: (h) => (bridge.iframe.style.height = `${h}px`),
+  onMessage: ({ role, content }) => chat.add(role, content),   // ui/message from the view
+  onUpdateModelContext: (ctx) => agent.setContext(ctx),
 });
-bridge.load(html);
-bridge.sendToolInput({ learner_id: "lan" });
-bridge.sendToolResult(result);
+
+// Give the model only the tools it should see
+agent.setTools(tools.filter(isModelVisible));
 ```
 
-| View → host message | What the bridge does |
+The view runs in an `allow-scripts`-only iframe (opaque origin), with a CSP built from its declared
+`_meta.ui.csp` domains. `ui/open-link` opens only http(s) URLs unless you supply `onOpenLink`. Call
+`bridge.teardown()` before removing the view so it can save state.
+
+## 🔐 OAuth 2.1
+
+```ts
+import { McpClient, oauth } from "mcp-lite-browser";
+
+const client = new McpClient("https://mcp.example.com/mcp", {
+  auth: oauth({
+    redirectUri: location.origin + "/callback.html",
+    clientMetadataUrl: location.origin + "/oauth-client.json",  // used when the AS supports CIMD
+    clientName: "My MCP app",                                  // used for dynamic registration otherwise
+  }),
+});
+await client.connect();   // first 401 → discovery → popup consent → tokens → request retried
+```
+
+`callback.html` only needs:
+
+```html
+<script type="module">
+  import { completeOAuthPopup } from "https://cdn.jsdelivr.net/gh/ducvuathuduc/mcp-lite-browser@v0.2.0/dist/mcp-lite-browser.min.js";
+  completeOAuthPopup();
+</script>
+```
+
+Tokens live in `sessionStorage` by default (pass `storage` to change it). For a static token use
+`auth: bearer("…")`. The playground ships a working [`callback.html`](playground/callback.html) and
+[`oauth-client.json`](playground/oauth-client.json).
+
+## 🌐 CORS and `Mcp-Session-Id`
+
+A browser can only talk to an MCP server on another origin if the server allows it. Your server must:
+
+- answer the `OPTIONS` preflight and send `Access-Control-Allow-Origin` for your page's origin;
+- allow the request headers `Content-Type`, `Accept`, `Authorization`, `MCP-Protocol-Version`, `Mcp-Session-Id`
+  and `Last-Event-ID` (`Access-Control-Allow-Headers`);
+- allow the methods `GET`, `POST`, `DELETE`;
+- **expose `Mcp-Session-Id`** (`Access-Control-Expose-Headers: Mcp-Session-Id, WWW-Authenticate`). Without it the
+  browser hides the session header, the client never learns the session id, and stateful servers reject every
+  request after `initialize`.
+
+Same-origin pages (server and page behind one host) need none of this.
+
+## 🎮 Playground
+
+**[ducvuathuduc.github.io/mcp-lite-browser](https://ducvuathuduc.github.io/mcp-lite-browser/)** is an MCP inspector
+running entirely on this library: connect to any CORS-enabled server (with OAuth), browse and call tools, read
+resources, render MCP Apps, answer elicitations, and watch live traffic. A built-in demo server works offline. Run
+it locally with `npm run build && npm run playground`.
+
+## 📚 API at a glance
+
+| Export | What it is |
 |---|---|
-| `ui/initialize` | Replies with `protocolVersion: "2026-01-26"`, `hostInfo`, capabilities and `hostContext` (dark theme, inline) |
-| `ui/notifications/initialized` | Marks the view ready and flushes queued notifications |
-| `ui/notifications/size-changed` | Calls `onSize(height)` |
-| `tools/call` | Checks `allowTool`, proxies to the server, calls `onToolResult`, replies with the result or error |
-| `resources/read` | Proxies to the server |
-| `ui/open-link` | Opens `http(s)` URLs in a new tab with `noopener`; other schemes get `-32602` |
-| anything else with an `id` | Replies `-32601 Unsupported` |
+| `McpClient` (alias `McpHttpClient`) | The client. Options: `protocolVersion`, `clientInfo`, `capabilities`, `fetch`, `headers`, `auth`, `onTraffic`, `timeout`, `maxRetries`, `reconnectDelay`, `reconnectOnSessionExpired`, `apps`, `listen`, `onElicit`, `onSampling`, `roots` |
+| `McpError` | JSON-RPC or HTTP error with `code` and `data` |
+| `bearer(token)` · `oauth(options)` / `OAuthProvider` | Auth providers |
+| `completeOAuthPopup`, `pkce`, `discoverProtectedResource`, `discoverAuthorizationServer`, `parseWwwAuthenticate`, `canonicalResource` | OAuth building blocks |
+| `AppBridge`, `buildCsp`, `injectCsp`, `decodeUiResource`, `getUiResourceUri`, `isModelVisible` | MCP Apps host |
+| `createMcpStore` · `useMcp` (`mcp-lite-browser/react`) | State for UI frameworks |
+| `SseParser`, `parseSse` | SSE parsing |
 
-## 🧭 How it works
-
-```mermaid
-sequenceDiagram
-  autonumber
-  participant P as Your page
-  participant C as McpHttpClient
-  participant S as MCP server (Streamable HTTP)
-  participant V as MCP App view (sandboxed iframe)
-  P->>C: connect()
-  C->>S: POST initialize {protocolVersion: "2025-11-25"}
-  S-->>C: result (JSON or SSE) + Mcp-Session-Id?
-  C->>S: POST notifications/initialized
-  P->>C: callTool("start_drill")
-  C->>S: POST tools/call + MCP-Protocol-Version (+ Mcp-Session-Id)
-  S-->>C: result
-  P->>V: AppBridge.load(html)
-  V->>P: ui/initialize
-  P-->>V: host info + capabilities
-  V->>P: ui/notifications/initialized
-  P-->>V: tool-input, tool-result (queued until now)
-  V->>P: tools/call "progress_report" (button click)
-  P->>C: allowTool? → callTool
-  C->>S: POST tools/call
-  S-->>C: result
-  P-->>V: result
-```
-
-## 🧩 Compatibility & limitations
-
-- **Protocol:** offers `2025-11-25` by default and adopts whatever version the server negotiates.
-- **Servers:** used end to end by [SpeakLoop](https://github.com/ducvuathuduc/speakloop)'s simulator (see its demo
-  video) against the official MCP Python SDK in stateless Streamable HTTP mode. The unit tests in this repo use a
-  fake server for JSON and SSE responses.
-- **Browsers:** any modern browser with ES modules and `fetch`. **Node ≥ 18** for tests (CI: 18, 20, 22).
-- **CORS:** serve the page from the same origin as the MCP server, or enable CORS on the server.
-- **Not yet supported:** server-initiated requests (sampling, elicitation, roots), the standalone `GET` SSE stream and
-  resumption, request cancellation and timeouts, OAuth flows. See the [roadmap](#%EF%B8%8F-roadmap).
-- **MCP Apps:** implements the subset a typical card view needs (see the table above), not every host capability.
+Full signatures are in the shipped `.d.ts` files ([`src/`](src) is the readable source).
 
 ## ✅ Testing
 
 ```bash
-npm test     # node --test, nothing to install
+npm ci
+npm run build && npm run typecheck && npm test && npm run size
 ```
 
-```text
-# tests 8
-# pass 8
-# fail 0
-```
-
-| Test | What it checks |
-|---|---|
-| `parseSse extracts JSON-RPC messages and ignores keep-alives` | SSE parsing |
-| `handshake + tools over JSON responses` | `initialize`, headers, session id, `tools/list`, `tools/call` |
-| `handshake + tools over SSE responses` | Same flow with `text/event-stream` and an interleaved notification |
-| `JSON-RPC errors become McpError with code` | Error mapping |
-| `request ids increase monotonically` | Request ids |
-| `load() sandboxes the view and queues notifications…` | Sandbox attribute, queue, `ui/initialize` reply |
-| `tools/call from the view is proxied…, honours allowTool, ignores other windows` | Proxying and the allow-list |
-| `ui/open-link only opens http(s) URLs; unknown requests get -32601` | Link safety and unsupported methods |
-
-## 🗺️ Roadmap
-
-- [ ] Handle server → client requests on SSE responses (sampling, elicitation)
-- [ ] Standalone `GET` SSE stream with `Last-Event-ID` resumption
-- [ ] Request timeouts and `notifications/cancelled`
-- [ ] Hand-written `index.d.ts` for TypeScript users (still no build step)
-- [ ] More MCP Apps host features (display modes, theme changes, `ui/message`)
-- [ ] Publish to the npm registry
-
-Suggestions are welcome: [open a feature request](https://github.com/ducvuathuduc/mcp-lite-browser/issues/new?template=feature_request.yml).
+54 tests with `node --test`: unit tests for the client, OAuth, the MCP Apps bridge, the store and the React hook,
+plus 17 end-to-end conformance tests against a real server built with the official MCP TypeScript SDK over HTTP.
+CI runs them on Node 18, 20 and 22.
 
 ## 🌟 Used by
 
 <a href="https://github.com/ducvuathuduc/speakloop"><img src="https://raw.githubusercontent.com/ducvuathuduc/speakloop/main/assets/logo.svg" width="40" align="left" alt="SpeakLoop logo"></a>
 
 **[SpeakLoop](https://github.com/ducvuathuduc/speakloop)**: an Alexa+ English speaking coach that remembers you.
-Its browser simulator uses this module for every MCP message and to render its MCP App cards.
+Its browser simulator uses this library for every MCP message and to render its MCP App cards.
 
 <br clear="left">
 
@@ -354,7 +268,7 @@ Release history: [CHANGELOG.md](CHANGELOG.md).
 
 ## 🙏 Acknowledgements
 
-- [Model Context Protocol](https://modelcontextprotocol.io): the Streamable HTTP transport and the MCP Apps extension (SEP-1865)
-- The [official MCP SDKs](https://github.com/modelcontextprotocol), whose behaviour this module follows
-- [Contributor Covenant](https://www.contributor-covenant.org) for the Code of Conduct
+- [Model Context Protocol](https://modelcontextprotocol.io): the Streamable HTTP transport, the authorization spec
+  and the [MCP Apps extension](https://github.com/modelcontextprotocol/ext-apps)
+- The [official MCP SDKs](https://github.com/modelcontextprotocol), whose behaviour this library follows and tests against
 - Built during *Build, Ship, Shape: Amazon Developer Hackathon 2026*

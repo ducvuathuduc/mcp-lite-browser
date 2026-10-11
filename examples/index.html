@@ -3,7 +3,7 @@
 <input id="url" value="http://127.0.0.1:8765/mcp" size="40"> <button id="go">Connect & list tools</button>
 <pre id="out"></pre>
 <script type="module">
-  import { McpHttpClient } from "../src/index.js";
+  import { McpHttpClient } from "../dist/index.js";
   document.getElementById("go").onclick = async () => {
     const out = document.getElementById("out");
     const c = new McpHttpClient(document.getElementById("url").value, { onTraffic: (d, m) => out.textContent += `${d} ${m.method || "result"}\n` });
